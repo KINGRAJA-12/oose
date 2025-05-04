@@ -7,6 +7,7 @@ export const getTotalPresentDays = async (req, res) => {
         user: userId,
         status: "Present",
       });
+      console.log(presentCount)
       return res.status(200).json({ totalPresentDays: presentCount });
     } catch (err) {
       console.error(err.message);

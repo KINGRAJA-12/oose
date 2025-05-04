@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { axiosInstance } from '../axiosInstance.js';
 import { ClipLoader } from 'react-spinners';
 import useAuth from '../Hooks/useAuth';
-import { useNavigate } from 'react-router-dom'; 
 
 const Profilepage = ({ user }) => {
   const [loading, setLoading] = useState(false);
@@ -14,7 +13,6 @@ const Profilepage = ({ user }) => {
     details: [],
   });
   const { logoutHandle } = useAuth();
-  const navigate = useNavigate(); 
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,12 +25,13 @@ const Profilepage = ({ user }) => {
           axiosInstance.get(`/user/get-total-present/${user?._id}`),
           axiosInstance.get(`/user/get-analysis/${user?._id}`),
         ]);
-        
+        console.log(presentRes,summaryRes)
         setAnalytics({
-          totalPresentDays: presentRes?.data?.totalPresentDays || 0,
-          totalDays: summaryRes?.data?.totalDays || 0,
+          totalPresentDays: presentRes?.data?.totalDays || 0,
+          totalDays: summaryRes?.data?.totalPresentDays || 0,
           details: summaryRes?.data?.details || [],
         });
+        console.log(analytics)
       } catch (err) {
         toast.error('Failed to load your profile or analytics');
         console.error(err);
@@ -68,7 +67,7 @@ const Profilepage = ({ user }) => {
         type="button"
         className="absolute z-20 top-10 right-10 text-white hover:text-gray-300"
         title="Logout"
-        onClick={handleLogout}  // Logout on click
+        onClick={handleLogout}
       >
         <FaSignOutAlt size={24} />
       </button>

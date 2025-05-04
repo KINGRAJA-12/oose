@@ -18,4 +18,5 @@ app.use("/api/admin",adminRoutes);
 app.listen(process.env.PORT,async ()=>{
     console.log("server start")
     await connectDb()
+
 })

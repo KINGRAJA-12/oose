@@ -33,8 +33,8 @@ const Viewpage = () => {
 
         setUser(userRes?.data?.user);
         setAnalytics({
-          totalPresentDays: presentRes?.data?.totalPresentDays || 0,
-          totalDays: summaryRes?.data?.totalDays || 0,
+          totalPresentDays: presentRes?.data?.totalDays || 0,
+          totalDays: summaryRes?.data?.totalPresentDays || 0,
           details: summaryRes?.data?.details || [],
         });
       } catch (err) {
