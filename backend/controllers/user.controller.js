@@ -3,14 +3,25 @@ import Attendance from "../models/Attendance.model.js";
 export const getTotalPresentDays = async (req, res) => {
     try {
       const { userId } = req.params;
-      const presentCount = await Attendance.countDocuments({
-        user: userId,
-        status: "Present",
-      });
-      console.log(presentCount)
-      return res.status(200).json({ totalPresentDays: presentCount });
+      let now=new Date();
+      let month=now.getMonth();
+      let year=now.getFullYear();
+      let attendanceRecords=await Attendance.find({month,year});
+      let data=0;
+      if(!attendanceRecords){
+        return res.status(400).json({message:"No year found"});
+      }
+      let totalPresentDays=0;
+       for (let record of attendanceRecords) {
+        const found = record.attendance.find(
+          (entry) => entry.user.toString() === userId && entry.status === "Present"
+        );
+        if (found) totalPresentDays++;
+      }
+      console.log("totalpresent",totalPresentDays)
+      return res.status(200).json({ totalPresentDays: data });
     } catch (err) {
-      console.error(err.message);
+      console.error("err1",err.message);
       return res.status(500).json({ message: "Internal server error" });
     }
   };
@@ -18,18 +29,37 @@ export const getTotalPresentDays = async (req, res) => {
   export const getMonthlySummary = async (req, res) => {
     try {
       const { userId } = req.params;
-      const start = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-      const end = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+  
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  
       const records = await Attendance.find({
-        user: userId,
-        date: { $gte: start, $lte: end },
+        year: now.getFullYear(),
+        month: now.getMonth(),
+        date: { $gte: start.getDate(), $lte: end.getDate() }
       });
-      return res.status(200).json({
-        totalDays: records.length,
-        details: records,
+  
+      const summary = records.map(record => {
+        const userAttendance = record.attendance.find(
+          (entry) => entry.user.toString() === userId
+        );
+        return {
+          date: record.date,
+          status: userAttendance ? userAttendance.status : "Absent"
+        };
       });
+      console.log(summary)
+      let response={
+        totalDays: summary.length,
+        presentDays: summary.filter(d => d.status === "Present").length,
+        absentDays: summary.filter(d => d.status === "Absent").length,
+        details: summary,
+      }
+      console.log(response)
+      return res.status(200).json(response);
     } catch (err) {
-      console.error(err.message);
+      console.error("err2",err.message);
       return res.status(500).json({ message: "Internal server error" });
     }
   };

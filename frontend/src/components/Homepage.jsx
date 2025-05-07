@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { FaTrashAlt, FaSignOutAlt, FaSearch, FaUser } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
-import { IoMdAdd } from 'react-icons/io';
+import { IoMdAdd, IoMdTabletLandscape } from 'react-icons/io';
 import AddEmployeeModal from './AddEmployeeModal';
 import { ClipLoader } from 'react-spinners';
 import toast from 'react-hot-toast';
 import { axiosInstance } from '../axiosInstance';
 import useAuth from '../Hooks/useAuth';
+import AttendanceSheet from './AttendanceSheet';
+import { MdOutlineHolidayVillage } from "react-icons/md";
 
 const Homepage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -14,7 +16,28 @@ const Homepage = () => {
   const [isFetching, setIsFetching] = useState(true);
   const [users, setUsers] = useState([]);
   const { logoutHandle } = useAuth();
+  let [elig,setElig]=useState(new Date().getTime()>=9);
+  let [istaking,setTaking]=useState(false)
+  let [a,setA]=useState(false);
   const navigate = useNavigate();
+  let validate=async()=>{
+    try{
+      setTaking(true)
+      console.log("this is called")
+      let date=new Date();
+      let time=date.getTime();
+      let day=date.getDate();
+      let month=date.getMonth();
+      let year=date.getFullYear();
+      let res=await axiosInstance.get(`/admin/iseligible/${day}/${month}/${year}`);
+      console.log(res)
+      setA(true)
+    }catch(err){
+      toast.error(err?.response?.data?.message||"failed to create")
+    }finally{
+      setTaking(false)
+    }
+  }
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -30,7 +53,9 @@ const Homepage = () => {
 
     fetchAll();
   }, [vis]);
-
+  let handleAttendnceVis=(b)=>{
+    setA(b)
+  }
   const handleLogout = async () => {
     try {
       await logoutHandle();
@@ -59,12 +84,19 @@ const Homepage = () => {
   const handleVis = (info) => {
     setVis(info);
   };
-
+  let handleHoliday=async()=>{
+    try{
+      let res=await axiosInstance.get("/admin/set-holiday");
+      toast.success(res?.data?.message||"successfully");
+    }catch(err){
+      toast.error(err?.response?.data?.message||"failed to set")
+    }
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 via-pink-400 to-yellow-300 flex items-center justify-center p-6 relative">
       <button
         type="button"
-        className="absolute top-6 right-6 text-white hover:text-gray-300"
+        className="absolute top-6 right-10 text-white hover:text-gray-300"
         title="Logout"
         onClick={handleLogout}
       >
@@ -74,7 +106,7 @@ const Homepage = () => {
       <Link
         to={"/profile"}
         type="button"
-        className="absolute top-6 right-14 text-white hover:text-gray-300"
+        className="absolute top-6 right-24 text-white hover:text-gray-300"
         title="Profile"
       >
         <FaUser size={24} />
@@ -96,7 +128,21 @@ const Homepage = () => {
               <FaSearch />
             </div>
           </div>
-
+          <button
+            type="button"
+            disabled={!elig}
+            onClick={validate}
+            className="bg-yellow-500 text-white ml-40 py-2 px-6 rounded-lg font-semibold hover:bg-yellow-600 transition flex items-center gap-2"
+          >
+            <IoMdTabletLandscape handleAttendnceVis={handleAttendnceVis}/>
+          </button>
+          <button
+            type="button"
+            onClick={handleHoliday}
+            className="bg-blue-500 text-white py-2 px-6 rounded-lg font-semibold hover:bg-blue-600 transition flex items-center gap-2"
+          >
+            <MdOutlineHolidayVillage />
+          </button>
           <button
             type="button"
             onClick={() => setVis(true)}
@@ -104,6 +150,7 @@ const Homepage = () => {
           >
             <IoMdAdd />
           </button>
+        
         </div>
 
         <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
@@ -155,6 +202,7 @@ const Homepage = () => {
       </div>
 
       {vis && <AddEmployeeModal handleVis={handleVis} />}
+      {a&&<AttendanceSheet handleAttendnceVis={handleAttendnceVis} users={users}/>}
     </div>
   );
 };

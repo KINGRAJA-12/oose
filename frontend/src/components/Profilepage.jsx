@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 import { axiosInstance } from '../axiosInstance.js';
 import { ClipLoader } from 'react-spinners';
 import useAuth from '../Hooks/useAuth';
+import { Link } from 'react-router-dom';
+import { MdHome } from 'react-icons/md';
 
 const Profilepage = ({ user }) => {
   const [loading, setLoading] = useState(false);
@@ -12,6 +14,11 @@ const Profilepage = ({ user }) => {
     totalDays: 0,
     details: [],
   });
+
+  const [absent, setAbsent] = useState(0);
+  const [present, setPresent] = useState(0);
+  const [details, setDetails] = useState([]);
+
   const { logoutHandle } = useAuth();
 
   useEffect(() => {
@@ -22,16 +29,19 @@ const Profilepage = ({ user }) => {
         setLoading(true);
 
         const [presentRes, summaryRes] = await Promise.all([
-          axiosInstance.get(`/user/get-total-present/${user?._id}`),
-          axiosInstance.get(`/user/get-analysis/${user?._id}`),
+          axiosInstance.get(`/user/get-total-present/${user._id}`),
+          axiosInstance.get(`/user/get-analysis/${user._id}`),
         ]);
-        console.log(presentRes,summaryRes)
+
+        setPresent(presentRes?.data?.presentDays || 0);
+        setAbsent(presentRes?.data?.absentDays || 0);
+        setDetails(presentRes?.data?.details || []);
+
         setAnalytics({
           totalPresentDays: presentRes?.data?.totalDays || 0,
           totalDays: summaryRes?.data?.totalPresentDays || 0,
           details: summaryRes?.data?.details || [],
         });
-        console.log(analytics)
       } catch (err) {
         toast.error('Failed to load your profile or analytics');
         console.error(err);
@@ -46,7 +56,7 @@ const Profilepage = ({ user }) => {
   const handleLogout = async () => {
     try {
       await logoutHandle();
-      window.location.reload()
+      window.location.reload();
     } catch (err) {
       console.log(err?.message);
     }
@@ -71,18 +81,22 @@ const Profilepage = ({ user }) => {
       >
         <FaSignOutAlt size={24} />
       </button>
+      {user?.role==="admin"&&<Link to={"/home"} className="absolute z-20 top-10 right-20 text-white hover:text-gray-300">
+      <MdHome size={26}/>
+      </Link>}
 
       <div className="bg-white/20 backdrop-blur-md rounded-2xl shadow-2xl p-8 w-full max-w-4xl">
         <h2 className="text-3xl font-bold text-center text-white mb-6">Your Profile</h2>
+
         <div className="flex items-center space-x-6 mb-8">
           <img
-            src={user?.image}
+            src={user?.image || 'https://via.placeholder.com/100'}
             alt="Profile"
             className="w-24 h-24 rounded-full object-cover border-4 border-white"
           />
           <div>
-            <p className="text-white text-2xl font-semibold">{user?.name}</p>
-            <p className="text-sm text-white opacity-80">{user?.email}</p>
+            <p className="text-white text-2xl font-semibold">{user?.name || 'Unnamed User'}</p>
+            <p className="text-sm text-white opacity-80">{user?.email || 'No email provided'}</p>
           </div>
         </div>
 
@@ -91,7 +105,7 @@ const Profilepage = ({ user }) => {
             <p className="text-white font-medium flex items-center gap-2">
               <FaRupeeSign /> Salary
             </p>
-            <p className="text-white">{user?.salary} Rs / day</p>
+            <p className="text-white">{user?.salary?.toLocaleString() || 0} Rs / day</p>
           </div>
 
           <div className="flex justify-between items-center">
@@ -101,20 +115,24 @@ const Profilepage = ({ user }) => {
             <p className="text-white">{user?.gender === 'M' ? 'Male' : 'Female'}</p>
           </div>
         </div>
+        
 
-        <div className="bg-white/20 p-6 rounded-xl">
+        {user?.role==="admin"?<div>
+        </div>:<div className="bg-white/20 p-6 rounded-xl">
           <h3 className="text-xl font-semibold text-white mb-4">Attendance Analysis</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             <div className="flex flex-col items-center">
               <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center">
-                <p className="text-white text-xl">{analytics.totalPresentDays}</p>
+                <p className="text-white text-xl">{present}</p>
               </div>
               <p className="text-white text-sm mt-2">Total Present Days</p>
             </div>
 
             <div className="flex flex-col items-center">
               <div className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center">
-                <p className="text-white text-xl">{analytics.totalDays}</p>
+                <p className="text-white text-xl">
+                  {details?.length ? details.length : 'Not started'}
+                </p>
               </div>
               <p className="text-white text-sm mt-2">This Month Days</p>
             </div>
@@ -122,15 +140,15 @@ const Profilepage = ({ user }) => {
             <div className="flex flex-col items-center">
               <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center">
                 <p className="text-white text-xl">
-                  {analytics.totalDays > 0
-                    ? `${Math.round((analytics.totalPresentDays / analytics.totalDays) * 100)}%`
+                  {details.length > 0
+                    ? `${Math.round((present / details.length) * 100)}%`
                     : '0%'}
                 </p>
               </div>
               <p className="text-white text-sm mt-2">Attendance Rate</p>
             </div>
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   );

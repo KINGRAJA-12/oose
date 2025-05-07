@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import UpdateEmployeeModal from './EditEmployeeModal';
 import { FaEdit, FaMale, FaFemale, FaRupeeSign, FaCheckCircle, FaCalendarAlt, FaShareAlt, FaCopy } from 'react-icons/fa';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { axiosInstance } from '../axiosInstance';
 import { ClipLoader } from 'react-spinners';
+import { MdArrowBack, MdHome } from 'react-icons/md';
 
 const Viewpage = () => {
   const [user, setUser] = useState(null);
@@ -15,7 +16,9 @@ const Viewpage = () => {
     totalDays: 0,
     details: [],
   });
-
+  let [absent,setAbsent]=useState(0);
+  let [present,setPresent]=useState(0);
+  let [details,setDetails]=useState(null);
   const { id } = useParams();
 
   const handleVis = (info) => setVis(info);
@@ -30,13 +33,16 @@ const Viewpage = () => {
           axiosInstance.get(`/user/get-total-present/${id}`),
           axiosInstance.get(`/user/get-analysis/${id}`),
         ]);
-
+        console.log("pre",presentRes,"sum",summaryRes)
+        setPresent(presentRes?.data?.presentDays)
+        setAbsent(presentRes?.data?.absentDays)
+        setDetails(presentRes?.data?.details)
         setUser(userRes?.data?.user);
-        setAnalytics({
-          totalPresentDays: presentRes?.data?.totalDays || 0,
-          totalDays: summaryRes?.data?.totalPresentDays || 0,
-          details: summaryRes?.data?.details || [],
-        });
+        // setAnalytics({
+        //   totalPresentDays: presentRes?.data?.totalDays || 0,
+        //   totalDays: summaryRes?.data?.totalPresentDays || 0,
+        //   details: summaryRes?.data?.details || [],
+        // });
       } catch (err) {
         toast.error('Failed to load user data or analytics');
         console.error(err);
@@ -76,6 +82,9 @@ const Viewpage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 via-pink-400 to-yellow-300 flex items-center justify-center p-6">
+      <Link to={"/home"} className="absolute z-20 top-10 left-20 text-white hover:text-gray-300">
+      <MdArrowBack size={26}/>
+      </Link>
       <div className="bg-white/20 backdrop-blur-md rounded-2xl shadow-2xl p-8 w-full max-w-4xl">
         <h2 className="text-3xl font-bold text-center text-white mb-6">Profile View</h2>
 
@@ -108,28 +117,28 @@ const Viewpage = () => {
         </div>
 
         <div className="bg-white/20 p-6 rounded-xl mb-6">
-          <h3 className="text-xl font-semibold text-white mb-4">Data Analysis</h3>
+          <h3 className="text-xl font-semibold text-white mb-4">Attendance Analysis</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             <div className="flex flex-col items-center">
               <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center">
-                <p className="text-white text-xl">{analytics.totalPresentDays}</p>
+                <p className="text-white text-xl">{present}</p>
               </div>
-              <p className="text-white text-sm mt-2">Total Present Days</p>
+              <p className="text-white text-sm mt-2">This month Present Days</p>
             </div>
 
             <div className="flex flex-col items-center">
               <div className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center">
-                <p className="text-white text-xl">{analytics.totalDays}</p>
+                <p className="text-white text-xl">{details.length}</p>
               </div>
-              <p className="text-white text-sm mt-2">This Month Attendance Records</p>
+              <p className="text-white text-sm mt-2">This {new Date().toLocaleString('default', { month: 'long' })} Working Records</p>
             </div>
 
             <div className="flex flex-col items-center">
               <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center">
                 <p className="text-white text-xl">
-                  {analytics.totalDays > 0
+                  {details.length > 0
                     ? `${Math.round(
-                        (analytics.totalPresentDays / analytics.totalDays) * 100
+                        (present / details.length) * 100
                       )}%`
                     : '0%'}
                 </p>

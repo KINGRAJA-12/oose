@@ -37,19 +37,19 @@ export const Login = async (req, res, next) => {
       secure: false,
       sameSite: "strict",
     });
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const alreadyMarked = await Attendance.findOne({
-      user: user._id,
-      date: { $gte: today },
-    });
-    if (!alreadyMarked) {
-      await Attendance.create({
-        user: user._id,
-        date: new Date(),
-        status: "Present",
-      });
-    }
+    // const today = new Date();
+    // today.setHours(0, 0, 0, 0);
+    // const alreadyMarked = await Attendance.findOne({
+    //   user: user._id,
+    //   date: { $gte: today },
+    // });
+    // if (!alreadyMarked) {
+    //   await Attendance.create({
+    //     user: user._id,
+    //     date: new Date(),
+    //     status: "Present",
+    //   });
+    // }
     return res.status(200).json({
       message: "Login successfully",
       user: {
